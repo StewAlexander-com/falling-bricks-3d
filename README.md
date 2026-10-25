@@ -28,6 +28,7 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 - From **level 4**, **cracked bricks** appear. They flicker white, flickering faster as they fall, then burst into two shards that fly apart sideways and bounce off the walls. Every level brings more of them, bursting lower and flying faster, but a burst always leaves you at least 0.8 seconds before the shards reach your row.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
 - There is **always a way through**. Every new brick's path is predicted, including where its shards will go, so at least two ball-sized gaps stay open in your row at every moment.
+- **No safe spots.** Bricks reach the walls as often as the middle, and if you sit still for more than about a second and a half, the next brick comes for you.
 - Brush past a brick without touching it to score a **close call**. It doesn't change your score, but it's counted on the game-over screen.
 
 ### Phone tips

@@ -154,6 +154,8 @@ export class Sim {
   private demoTarget = C.FIELD_W / 2;
   private nextPlanT = 0;
   private nextFormationT = Infinity;
+  private campX = C.FIELD_W / 2;
+  private campT = 0;
   private formationLock = 0;
   private buf: Placed[] = [];
 
@@ -177,6 +179,8 @@ export class Sim {
     this.nextPlanT = 0;
     this.nextFormationT = Infinity;
     this.formationLock = 0;
+    this.campX = this.ballX;
+    this.campT = 0;
     this.minRowGap = Infinity;
     this.demoTarget = this.ballX;
     this.generateWave();
@@ -206,6 +210,7 @@ export class Sim {
     if (this.mode === 'play') {
       this.score += dt;
       this.checkMilestone();
+      this.trackCamping(dt);
     }
     if (this.mode === 'demo' || this.autopilot) this.autoSteer(dt);
 
@@ -330,12 +335,10 @@ export class Sim {
     const n = this.numBricks();
     const base = this.baseSpeed();
 
+    // Half-brick steps from wall to wall, so both edges can be covered.
     const candidates: number[] = [];
-    let stagger = false;
-    for (let x = C.BRICK_W / 2; x <= C.FIELD_W - C.BRICK_W / 2; x += stagger ? C.BRICK_W / 2 : C.BRICK_W) {
-      candidates.push(x);
-      stagger = !stagger;
-    }
+    const slots = Math.floor((C.FIELD_W - C.BRICK_W) / (C.BRICK_W / 2));
+    for (let i = 0; i <= slots; i++) candidates.push(C.BRICK_W / 2 + (i * (C.FIELD_W - C.BRICK_W)) / slots);
     for (let i = candidates.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
@@ -448,15 +451,36 @@ export class Sim {
     const stage = this.stage;
     const before = stage > 0 ? this.minGaps(this.bricks) : C.MIN_SAFE_GAPS;
     for (let attempt = 0; attempt < 10; attempt++) {
-      const x = rand(C.BRICK_W / 2, C.FIELD_W - C.BRICK_W / 2);
+      const aimed = this.mode === 'play' && this.campT >= C.CAMP_TIME && attempt < 6;
+      const x = aimed ? clamp(this.ballX + rand(-20, 20), C.BRICK_W / 2, C.FIELD_W - C.BRICK_W / 2) : this.spawnX();
       const brick = this.makeBrick(x, C.FIELD_H + C.BRICK_H, speed);
       if (!this.placementIsSolvable(brick)) continue;
       if (stage > 0 && this.applyTwist(brick, stage) && this.minGaps([...this.bricks, brick]) < Math.min(C.MIN_SAFE_GAPS, before)) clearTwist(brick);
       this.bricks.push(brick);
+      if (aimed) this.campT = C.CAMP_TIME * 0.5;
       this.nextRandomT = this.t + this.entryDelay();
       return;
     }
     this.nextRandomT = this.t + C.BLOCKED_SPAWN_RETRY;
+  }
+
+  /**
+   * Picks the spot to threaten uniformly across the ball's whole range, then
+   * places the brick over it. Clamping at the rails gives the strips along the
+   * walls the same chance of being hit as the middle.
+   */
+  private spawnX() {
+    const target = rand(C.BALL_RADIUS, C.FIELD_W - C.BALL_RADIUS);
+    return clamp(target + rand(-C.BRICK_W / 2, C.BRICK_W / 2), C.BRICK_W / 2, C.FIELD_W - C.BRICK_W / 2);
+  }
+
+  private trackCamping(dt: number) {
+    if (Math.abs(this.ballX - this.campX) > C.CAMP_RADIUS) {
+      this.campX = this.ballX;
+      this.campT = 0;
+    } else {
+      this.campT += dt;
+    }
   }
 
   private placementIsSolvable(nb: Brick) {
@@ -491,22 +515,29 @@ export class Sim {
 
   private ensureSafePassage() {
     for (let i = 0; i < 14; i++) {
-      if (this.bricks.length <= 1 || this.countGaps(this.bricks) >= C.MIN_SAFE_GAPS) return;
+      if (this.bricks.length <= 1 || this.countGaps(this.bricks, true) >= C.MIN_SAFE_GAPS) return;
       const worst = this.findMostCrowded();
       if (!worst) return;
       this.bricks.splice(this.bricks.indexOf(worst), 1);
     }
   }
 
-  private countGaps(spans: ReadonlyArray<Span>) {
+  /**
+   * Corridors the ball fits through. A wide opening holds several, otherwise a
+   * lone brick against a wall looks like it closes the field and the walls are
+   * never covered. `openings` counts each opening once instead, which keeps
+   * the opening waves as sparse as the original game's.
+   */
+  private countGaps(spans: ReadonlyArray<Span>, openings = false) {
     const sorted = [...spans].sort((a, b) => a.x - b.x);
     let count = 0;
     let prevR = 0;
+    const fits = (w: number) => (openings ? (w >= C.SAFE_GAP ? 1 : 0) : Math.max(0, Math.floor(w / C.SAFE_GAP)));
     for (const s of sorted) {
-      if (s.x - s.w / 2 - prevR >= C.SAFE_GAP) count++;
+      count += fits(s.x - s.w / 2 - prevR);
       prevR = Math.max(prevR, s.x + s.w / 2);
     }
-    if (C.FIELD_W - prevR >= C.SAFE_GAP) count++;
+    count += fits(C.FIELD_W - prevR);
     return count;
   }
 

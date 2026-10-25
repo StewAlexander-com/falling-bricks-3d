@@ -44,6 +44,11 @@ export const MIN_SAFE_GAPS = 2;
 export const SAFE_GAP_MARGIN = 8;
 export const SAFE_GAP = BALL_RADIUS * 2 + SAFE_GAP_MARGIN + 24;
 
+// Staying within CAMP_RADIUS of one spot for CAMP_TIME seconds makes the next
+// random brick aim at the ball (it still has to pass the clear-path check).
+export const CAMP_RADIUS = 45;
+export const CAMP_TIME = 1.5;
+
 export const NEAR_MISS_DIST = 14;
 export const SIM_MAX_STEP = 1 / 120;
 
