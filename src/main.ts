@@ -1,6 +1,6 @@
 import './style.css';
 import * as C from './config';
-import { Sim } from './sim';
+import { Sim, VARIANTS, type Variant } from './sim';
 import { Renderer, type Quality } from './render';
 import { Sound } from './audio';
 import * as store from './storage';
@@ -22,7 +22,12 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const settings = store.loadSettings();
+const params = new URLSearchParams(location.search);
 const sim = new Sim();
+const requested = params.get('mode') as Variant | null;
+sim.variant = requested && VARIANTS.includes(requested) ? requested : 'classic';
+sim.autopilot = params.has('bot');
+sim.startLevel = Math.max(1, Math.min(30, Number(params.get('level')) || 1));
 const sound = new Sound();
 sound.musicOn = settings.music;
 sound.sfxOn = settings.sfx;
@@ -240,6 +245,21 @@ function showBanner(title: string, sub = '') {
   bannerTimer = window.setTimeout(() => banner.classList.remove('show'), 2000);
 }
 
+const TWIST_TIPS: Record<Variant, [string, string]> = {
+  classic: ['', ''],
+  drift: ['Drifters! Some bricks now slide sideways and bounce off the walls', 'More drifters, sliding faster'],
+  split: ['Cracked bricks! Flickering bricks burst in two partway down', 'More cracked bricks, bursting lower'],
+  formation: ['Formations! Watch for patterns of bricks and find the path', 'Formations get longer and tighter'],
+};
+
+function levelTip(level: number, tierUp: boolean) {
+  const [intro, more] = TWIST_TIPS[sim.variant];
+  if (sim.variant !== 'classic' && level === C.TWIST_START_LEVEL) return intro;
+  if (tierUp) return 'Brick speeds now vary — hot colours fall faster';
+  if (sim.variant !== 'classic' && level > C.TWIST_START_LEVEL && (level - C.TWIST_START_LEVEL) % 2 === 0) return more;
+  return '';
+}
+
 // ── Settings ────────────────────────────────────────────────────────────────
 
 const setMusic = $<HTMLInputElement>('#set-music');
@@ -408,7 +428,15 @@ function frame(now: number) {
       sound.levelUp();
       renderer.levelUp();
       flash('gold');
-      showBanner(`Level ${ev.level}`, ev.tierUp ? 'Brick speeds now vary — hot colours fall faster' : '');
+      showBanner(`Level ${ev.level}`, levelTip(ev.level, ev.tierUp));
+    } else if (ev.type === 'split') {
+      renderer.split(ev.x, ev.y, ev.color);
+      if (state === 'playing') sound.crack();
+    } else if (ev.type === 'formation') {
+      if (state === 'playing') {
+        sound.formation();
+        if (!banner.classList.contains('show')) showBanner(ev.name, 'Formation incoming');
+      }
     } else if (ev.type === 'wave') {
       if (state === 'playing') sound.wave();
     } else if (ev.type === 'nearMiss') {
@@ -446,6 +474,6 @@ function frame(now: number) {
 showScreen('title');
 requestAnimationFrame(frame);
 
-if (import.meta.env.DEV || location.search.includes('debug')) {
+if (import.meta.env.DEV || params.has('debug')) {
   Object.assign(window, { sim, renderer, store, sound, game: { get state() { return state; }, startGame, pause, resume } });
 }

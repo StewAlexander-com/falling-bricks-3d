@@ -6,7 +6,8 @@
     "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview --host",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "playtest": "tsx scripts/playtest.ts"
   },
   "license": "GPL-3.0",
   "type": "module",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.186.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0"

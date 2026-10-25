@@ -156,6 +156,17 @@ export class Sound {
     this.tone(1600, 0, 0.09, 'triangle', 0.08, 2400);
   }
 
+  crack() {
+    if (!this.ready()) return;
+    this.burst(0, 0.12, 0.35, 5200);
+    this.tone(420, 0, 0.1, 'square', 0.05, 180);
+  }
+
+  formation() {
+    if (!this.ready()) return;
+    [392, 392, 587.33].forEach((f, i) => this.tone(f, i * 0.09, 0.12, 'square', 0.06));
+  }
+
   death() {
     if (!this.ready()) return;
     this.burst(0, 0.55, 0.9, 3200);

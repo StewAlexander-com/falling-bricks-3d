@@ -118,6 +118,8 @@ export class Renderer {
   private v = new THREE.Vector3();
   private s = new THREE.Vector3();
   private col = new THREE.Color();
+  private white = new THREE.Color(1.6, 1.6, 1.6);
+  private zAxis = new THREE.Vector3(0, 0, 1);
 
   constructor(canvas: HTMLCanvasElement, quality: Quality) {
     this.quality = quality;
@@ -439,6 +441,13 @@ export class Renderer {
     if (this.parts.instanceColor) this.parts.instanceColor.needsUpdate = true;
   }
 
+  split(x: number, y: number, color: RGB) {
+    for (let i = 0; i < 14; i++) this.spawnPart(x, y, color, 300, 4, 0.45 + Math.random() * 0.25, 40);
+    const c = new THREE.Color('#ffffff');
+    for (let i = 0; i < 6; i++) this.spawnPart(x, y, c, 220, 2.5, 0.3, 20);
+    if (this.parts.instanceColor) this.parts.instanceColor.needsUpdate = true;
+  }
+
   levelUp() {
     this.flash = Math.max(this.flash, 0.9);
   }
@@ -476,19 +485,29 @@ export class Renderer {
     for (const b of sim.bricks) {
       if (n >= MAX_BRICKS) break;
       const wob = this.reducedMotion ? 0 : 1;
-      this.e.set(Math.sin(this.time * 1.7 + b.id) * 0.06 * wob, Math.sin(this.time * 1.1 + b.id * 1.7) * 0.1 * wob, 0);
+      // Drifters bank into their slide so the direction reads at a glance.
+      const bank = THREE.MathUtils.clamp(-b.vx / 900, -0.18, 0.18);
+      this.e.set(Math.sin(this.time * 1.7 + b.id) * 0.06 * wob, Math.sin(this.time * 1.1 + b.id * 1.7) * 0.1 * wob, bank);
       this.q.setFromEuler(this.e);
-      this.m.compose(this.v.set(toX(b.x), b.y, 0), this.q, this.s.set(1, b.h / C.BRICK_H, 1));
+      this.m.compose(this.v.set(toX(b.x), b.y, 0), this.q, this.s.set(b.w / C.BRICK_W, b.h / C.BRICK_H, 1));
       this.bricks.setMatrixAt(n, this.m);
       this.col.setRGB(b.color[0], b.color[1], b.color[2], THREE.SRGBColorSpace).multiplyScalar(1 + b.spdNorm * 0.9);
+      if (b.splitY !== null) {
+        // Cracked bricks flicker white, faster as they near the burst height.
+        const left = THREE.MathUtils.clamp((b.y - b.splitY) / (C.FIELD_H - b.splitY), 0, 1);
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * (8 + (1 - left) * 26) + b.id);
+        this.col.lerp(this.white, 0.25 + 0.45 * pulse * (1 - left * 0.6));
+      }
       this.bricks.setColorAt(n, this.col);
 
       const k = sim.mode === 'dead' ? 0 : THREE.MathUtils.clamp((b.speed - 250) / 300, 0, 1);
-      const len = k > 0.02 ? b.speed * 0.18 * (0.4 + 0.6 * k) : 0;
-      this.q.identity();
+      const drift = sim.mode === 'dead' ? 0 : Math.abs(b.vx);
+      const len = k > 0.02 || drift ? Math.max(k > 0.02 ? b.speed * 0.18 * (0.4 + 0.6 * k) : 0, drift ? 70 : 0) : 0;
+      // Streaks trail opposite the direction of travel.
+      this.q.setFromAxisAngle(this.zAxis, Math.atan2(b.vx, b.speed));
       this.m.compose(this.v.set(toX(b.x), b.y + b.h / 2 - 2, -C.BRICK_DEPTH / 2), this.q, this.s.set(b.w * 0.82, len, 1));
       this.streaks.setMatrixAt(n, this.m);
-      this.col.multiplyScalar(0.25 + k * 0.55);
+      this.col.multiplyScalar(0.25 + Math.max(k, drift ? 0.6 : 0) * 0.55);
       this.streaks.setColorAt(n, this.col);
       n++;
     }

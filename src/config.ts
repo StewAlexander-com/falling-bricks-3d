@@ -47,6 +47,30 @@ export const SAFE_GAP = BALL_RADIUS * 2 + SAFE_GAP_MARGIN + 24;
 export const NEAR_MISS_DIST = 14;
 export const SIM_MAX_STEP = 1 / 120;
 
+// ── After level 3 ───────────────────────────────────────────────────────────
+// Each mode adds one new mechanic at level 4 and escalates it every level.
+export const TWIST_START_LEVEL = 4;
+
+// Safety check: brick paths are predicted on this time step, over at most this horizon.
+export const PREDICT_STEP = 0.025;
+export const PREDICT_HORIZON = 4;
+
+// Drifters: bricks that slide sideways and bounce off the rails.
+export const DRIFT_CHANCE = [0.4, 0.08, 0.75] as const; // start, per level, max
+export const DRIFT_SPEED = [75, 14, 170] as const;
+
+// Splitters: cracked bricks that burst into two shards partway down.
+export const SPLIT_CHANCE = [0.2, 0.06, 0.5] as const;
+export const SPLIT_HEIGHT = [0.62, -0.03, 0.42] as const; // fraction of FIELD_H
+export const SPLIT_SHARD_SPEED = [120, 8, 190] as const;
+export const SHARD_W = BRICK_W * 0.58;
+
+// Formations: choreographed brick patterns that replace a random wave.
+export const FORMATION_EVERY = [10, -0.7, 5] as const; // seconds between formations
+export const FORMATION_ROWS = [3, 0.5, 6] as const;
+export const FORMATION_ROW_TIME = [0.7, -0.03, 0.45] as const; // seconds between rows
+export const FORMATION_GAP = 74;
+
 export const KEY_SPEED = 680;
 export const TOUCH_SENSITIVITY = 1.25;
 
