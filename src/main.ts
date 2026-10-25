@@ -165,6 +165,7 @@ function toTitle() {
   $('#title-best').textContent = `${best}`;
   state = 'title';
   showScreen('title');
+  applyUpdateIfSafe();
 }
 
 function onDeath(x: number, y: number, color: [number, number, number]) {
@@ -364,6 +365,7 @@ window.addEventListener('keyup', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
   sound.suspend(document.hidden);
+  if (document.hidden && state === 'over') applyUpdateIfSafe(true);
 });
 window.addEventListener('blur', () => { pause(); keys.left = keys.right = false; });
 
@@ -473,6 +475,47 @@ function frame(now: number) {
 
 showScreen('title');
 requestAnimationFrame(frame);
+
+// ── Updates for installed copies ────────────────────────────────────────────
+// The service worker installs a new version as soon as it is deployed, but an
+// open or resumed app keeps running the old code. Check whenever the app comes
+// back to the foreground, then reload at a moment that can't cost a run.
+
+let updateReady = false;
+
+function applyUpdateIfSafe(hidden = false) {
+  if (!updateReady) return;
+  const onMenu = state === 'title' && screenStack.length <= 1;
+  if (!onMenu && !(hidden && state === 'over')) return;
+  sessionStorage.setItem('updated', '1');
+  location.reload();
+}
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  const base = import.meta.env.BASE_URL;
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) {
+      hadController = true;
+      return;
+    }
+    updateReady = true;
+    applyUpdateIfSafe(document.hidden);
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${base}sw.js`, { scope: base }).then((reg) => {
+      const check = () => { if (navigator.onLine) reg.update().catch(() => {}); };
+      setInterval(check, 30 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+      window.addEventListener('online', check);
+    });
+  });
+}
+
+if (sessionStorage.getItem('updated')) {
+  sessionStorage.removeItem('updated');
+  setTimeout(() => showBanner('Updated', 'You have the latest version'), 600);
+}
 
 if (import.meta.env.DEV || params.has('debug')) {
   Object.assign(window, { sim, renderer, store, sound, game: { get state() { return state; }, startGame, pause, resume } });

@@ -4,7 +4,7 @@
 
 ![Falling Bricks 3D](public/og.jpg)
 
-A 3D web remake of [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules, same difficulty curve, same *Ode to Joy* soundtrack, now playable in any modern browser on desktop, phone and tablet. Nothing to install.
+A 3D web remake of [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules and the same *Ode to Joy* soundtrack, plus a new twist from level 4: **cracked bricks** that burst into shards as they fall. Playable in any modern browser on desktop, phone and tablet. Nothing to install.
 
 ---
 
@@ -21,20 +21,42 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 - The game pauses itself if you switch tabs or apps.
 - A short "drag to move" prompt appears on your first game and disappears once you move.
 
-### Difficulty
+### Levels 1 to 3: learn the drop
 
 - Every **20 seconds** the level goes up: bricks fall faster and waves get bigger. The bar under the HUD shows progress to the next level.
 - From **level 3**, each brick gets its own speed, and the spread widens every 3 levels.
-- From **level 4**, **cracked bricks** appear. They flicker white, flickering faster as they fall, then burst into two shards that fly apart sideways and bounce off the walls. Every level brings more of them, bursting lower and flying faster, but a burst always leaves you at least 0.8 seconds before the shards reach your row.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
-- There is **always a way through**. Every new brick's path is predicted, including where its shards will go, so at least two ball-sized gaps stay open in your row at every moment.
-- **No safe spots.** Bricks reach the walls as often as the middle, and if you sit still for more than about a second and a half, the next brick comes for you.
+
+### Level 4 and up: cracked bricks
+
+A banner announces them the first time. A cracked brick:
+
+1. **Flickers white** as it falls, and the flicker speeds up as it gets close to bursting.
+2. **Bursts** partway down with a crack and a spray of sparks.
+3. Becomes **two smaller shards** that fly apart sideways and bounce off the walls.
+
+The spot under a cracked brick is safe now but won't be in a second, and the gap between its shards gets wider as they fall. Every level adds more cracked bricks, which burst lower and throw their shards faster. The banner reminds you every second level.
+
+| Level | Bricks that are cracked | Warning after a burst |
+|-------|-------------------------|-----------------------|
+| 4 | about 1 in 5 | 1.15 s |
+| 7 | about 2 in 5 | 1.0 s |
+| 9 | 1 in 2 (the maximum) | 0.95 s |
+| 13+ | 1 in 2 | 0.8 s (the minimum) |
+
+"Warning after a burst" is the minimum time between a burst and its shards reaching your row.
+
+### Always fair, never safe
+
+- There is **always a way through**. Every new brick's path is predicted, including where its shards will go and how they bounce, so at least two ball-sized gaps stay open in your row at every moment.
+- There are **no safe spots**. Bricks reach the walls as often as the middle. If you sit in one place for more than about a second and a half, the next brick is aimed at you, so keep moving.
 - Brush past a brick without touching it to score a **close call**. It doesn't change your score, but it's counted on the game-over screen.
 
 ### Phone tips
 
 - For full-screen play, use **Share → Add to Home Screen** (iOS) or **Install app** (Android/Chrome).
 - After the first visit it also works **offline**, without music.
+- An installed copy **updates itself**. It checks for a new version whenever you open or return to it, installs it in the background and switches over the next time you're on the main menu, never mid-game. A short "Updated" banner confirms it.
 - The game is built for portrait. In landscape it still works, but you'll see a hint to rotate.
 
 ---
@@ -54,13 +76,17 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 
 ## What carried over from the original
 
-- Every gameplay constant: brick speeds, the ×1.12 level-up boost, erratic-speed tiers, wave sizes, spawn timing, safe-gap width, and ball and brick sizes
+- Every gameplay constant for levels 1 to 3: brick speeds, the ×1.12 level-up boost, erratic-speed tiers, wave sizes, spawn timing, safe-gap width, and ball and brick sizes
 - Speed-encoded bricks: faster bricks are taller and shift toward red; slower ones cool toward blue
 - Score = seconds survived, one level every 20 points
 - Top-5 leaderboard with names and dates
 - *Ode to Joy* background music and the dark brick-wall background
 
 ## What's new
+
+**Gameplay**
+- **Cracked bricks** from level 4, chosen in a playtest against drifting bricks and brick formations (see [`docs/post-level-3-design.md`](docs/post-level-3-design.md))
+- **No safe spots:** bricks cover the walls, and staying still draws an aimed brick
 
 **3D graphics**
 - Rounded, lit bricks that wobble slightly as they fall, with shadows cast on the original brick wall
@@ -70,7 +96,8 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 
 **Fixes to the original**
 - **Same speed on every screen.** The original moved bricks a fixed number of pixels *per frame*, so it ran twice as fast on 120 Hz screens. Speeds are now per second, so 60, 90, 120 and 144 Hz all play identically.
-- **"Always a way through" is now real.** The original README promised random bricks were checked for a clear path, but the code never did it. It's enforced now. A simulation of 40 games up to level 21 found no moment where the ball's row was blocked; the narrowest gap was 65 units for a 30-unit ball.
+- **"Always a way through" is now real.** The original README promised random bricks were checked for a clear path, but the code never did it. It's enforced now, with each brick's future path predicted, shards included. In 120 autopilot games, the narrowest gap the ball ever faced was 66 units, for a 30-unit ball.
+- **No more wall camping.** The original never placed bricks against the right wall and rarely against the left, so parking the ball there was almost safe. A ball left still at either wall now gets hit within a few seconds.
 - **On-screen brick limit enforced.** `MAX_LIVE_BRICKS` was defined in the original but never used.
 
 **Interface**
@@ -79,6 +106,7 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 - Level-up banners that explain new mechanics when they kick in
 - Your score is saved the moment you die, and you can edit your name afterwards
 - A short delay before **Play again** works, so a panicked tap doesn't restart instantly
+- Installed copies update themselves, only between games
 - Large touch targets, keyboard focus outlines, iPhone notch and home-bar spacing, and support for the system "reduce motion" setting
 
 ---
@@ -149,6 +177,8 @@ Every push to `main` builds and deploys to GitHub Pages through [`.github/workfl
 | `public/icons/`, `public/og.jpg` | App icons and link-preview image, modelled and rendered in Blender |
 
 The PWA build (via `vite-plugin-pwa`) generates the web app manifest and service worker. The music is left out of the offline cache because Safari streams audio in chunks, which breaks precaching.
+
+The service worker is registered in `src/main.ts` rather than by the plugin. The app checks for a new version on launch, whenever it returns to the foreground, every 30 minutes and when the device comes back online. A new service worker takes over as soon as it's installed. The page reloads into the new version only on the main menu, or when it's hidden on the game-over screen, so a deploy never interrupts a run.
 
 ---
 

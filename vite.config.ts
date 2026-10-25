@@ -9,7 +9,10 @@ export default defineConfig({
   },
   plugins: [
     VitePWA({
+      // Registered in main.ts so installed copies check for updates on resume
+      // and only reload when it can't interrupt a game.
       registerType: 'autoUpdate',
+      injectRegister: false,
       includeAssets: ['icons/*.png', 'img/wall.webp'],
       manifest: {
         name: 'Falling Bricks 3D',
@@ -30,6 +33,9 @@ export default defineConfig({
         // Music streams with HTTP range requests, which precaching breaks on Safari.
         globIgnores: ['**/audio/**', 'og.jpg'],
         navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
