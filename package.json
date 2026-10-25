@@ -1,0 +1,23 @@
+{
+  "name": "falling-bricks-3d",
+  "version": "1.0.0",
+  "description": "Falling Bricks 3D - web remake of the Pythonista Falling Bricks game",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc"
+  },
+  "license": "GPL-3.0",
+  "type": "module",
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0"
+  },
+  "private": "true"
+}
