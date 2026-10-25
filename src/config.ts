@@ -62,6 +62,8 @@ export const DRIFT_SPEED = [75, 14, 170] as const;
 // Splitters: cracked bricks that burst into two shards partway down.
 export const SPLIT_CHANCE = [0.2, 0.06, 0.5] as const;
 export const SPLIT_HEIGHT = [0.62, -0.03, 0.42] as const; // fraction of FIELD_H
+// Seconds between a burst and its shards reaching the ball's row, whatever the speed.
+export const SPLIT_MIN_WARNING = [1.15, -0.04, 0.8] as const;
 export const SPLIT_SHARD_SPEED = [120, 8, 190] as const;
 export const SHARD_W = BRICK_W * 0.58;
 

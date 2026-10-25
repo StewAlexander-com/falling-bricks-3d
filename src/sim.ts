@@ -369,7 +369,10 @@ export class Sim {
       return true;
     }
     if (this.variant === 'split' && Math.random() < ramp(C.SPLIT_CHANCE, stage)) {
-      b.splitY = C.FIELD_H * ramp(C.SPLIT_HEIGHT, stage) * rand(0.92, 1.08);
+      const minY = C.BALL_Y + b.h + C.BALL_RADIUS + b.speed * ramp(C.SPLIT_MIN_WARNING, stage);
+      const splitY = Math.max(minY, C.FIELD_H * ramp(C.SPLIT_HEIGHT, stage) * rand(0.92, 1.08));
+      if (splitY > b.y - C.BRICK_H) return false;
+      b.splitY = splitY;
       b.shardSpeed = ramp(C.SPLIT_SHARD_SPEED, stage) * rand(0.85, 1.15);
       return true;
     }

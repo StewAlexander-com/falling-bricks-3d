@@ -25,8 +25,9 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 
 - Every **20 seconds** the level goes up: bricks fall faster and waves get bigger. The bar under the HUD shows progress to the next level.
 - From **level 3**, each brick gets its own speed, and the spread widens every 3 levels.
+- From **level 4**, **cracked bricks** appear. They flicker white, flickering faster as they fall, then burst into two shards that fly apart sideways and bounce off the walls. Every level brings more of them, bursting lower and flying faster, but a burst always leaves you at least 0.8 seconds before the shards reach your row.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
-- There is **always a way through**. Every new brick is checked so at least two ball-sized gaps stay open when it reaches your row.
+- There is **always a way through**. Every new brick's path is predicted, including where its shards will go, so at least two ball-sized gaps stay open in your row at every moment.
 - Brush past a brick without touching it to score a **close call**. It doesn't change your score, but it's counted on the game-over screen.
 
 ### Phone tips
@@ -109,6 +110,21 @@ npm run build      # type-check + production build into dist/
 npm run preview    # serve the production build locally
 ```
 
+### Game modes and playtesting
+
+Cracked bricks won a playtest against two other post-level-3 mechanics, which are still in the code for comparison. Pick one with `?mode=`:
+
+| `?mode=` | After level 3 |
+|----------|---------------|
+| `split` (default) | Cracked bricks burst into two shards |
+| `drift` | Some bricks slide sideways and bounce off the walls |
+| `formation` | Choreographed patterns (Slalom, Funnel, Staircase, Zipper) after a short lull |
+| `classic` | The original game, with no new mechanic |
+
+Other testing parameters: `?level=3` starts at level 3, and `?bot` lets the autopilot steer. They combine, for example `?mode=drift&level=6&bot`.
+
+`npm run playtest -- 40` has the autopilot play 40 games of each mode headlessly and prints survival times, how often it had to change direction, close calls and the narrowest corridor it faced. The design notes and results are in [`docs/post-level-3-design.md`](docs/post-level-3-design.md).
+
 Add `?debug` to the URL to expose `sim`, `renderer`, `sound`, `store` and `game` on `window` for inspection in the browser console.
 
 ### Deployment
@@ -120,7 +136,8 @@ Every push to `main` builds and deploys to GitHub Pages through [`.github/workfl
 | Path | Purpose |
 |------|---------|
 | `src/config.ts` | Every gameplay constant, converted from the original's per-frame values to per-second |
-| `src/sim.ts` | Game rules, brick generation, the clear-path check and collision. No rendering; a direct port of `Falling-bricks.py` |
+| `src/sim.ts` | Game rules, brick generation, the post-level-3 modes, the predictive clear-path check, collision and the autopilot. No rendering |
+| `scripts/playtest.ts` | Headless autopilot playtest that compares the modes |
 | `src/render.ts` | Three.js scene: bricks drawn in a single GPU call, ball, lighting, effects, camera fitting, graphics quality levels |
 | `src/audio.ts` | Music through Web Audio (so volume works on iOS) and sound effects generated in code |
 | `src/main.ts` | Game states, input, HUD, menus and the main loop |
