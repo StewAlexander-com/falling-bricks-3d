@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#05060d" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Bricks 3D" />
+    <title>Falling Bricks 3D</title>
+    <meta name="description" content="Dodge waves of falling 3D bricks for as long as you can. Free arcade game for desktop and mobile browsers." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Falling Bricks 3D" />
+    <meta property="og:description" content="Dodge waves of falling 3D bricks for as long as you can." />
+    <meta property="og:image" content="https://stewalexander-com.github.io/falling-bricks-3d/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="preload" href="/img/wall.webp" as="image" type="image/webp" crossorigin="anonymous" />
+  </head>
+  <body>
+    <canvas id="game" aria-label="Falling Bricks 3D playfield"></canvas>
+    <div id="vignette" aria-hidden="true"></div>
+    <div id="flash" aria-hidden="true"></div>
+    <div id="safe-probe" aria-hidden="true"></div>
+
+    <header id="hud" class="is-hidden">
+      <div class="stat"><span class="lbl">Score</span><span id="hud-score" class="val">0</span></div>
+      <div class="stat"><span class="lbl">Level</span><span id="hud-level" class="val">1</span></div>
+      <div class="stat"><span class="lbl">Best</span><span id="hud-best" class="val">0</span></div>
+      <button id="btn-pause" class="icon-btn" aria-label="Pause (Esc)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" /><rect x="14" y="5" width="4" height="14" rx="1.2" /></svg>
+      </button>
+      <div id="hud-progress" aria-hidden="true"><i></i></div>
+    </header>
+
+    <div id="banner" aria-live="polite"><strong></strong><span></span></div>
+    <div id="coach" hidden><span>←</span> <b></b> <span>→</span></div>
+
+    <section id="screen-title" class="screen">
+      <div class="panel">
+        <h1 class="logo"><span>Falling</span><span>Bricks</span><em>3D</em></h1>
+        <p class="tagline">Dodge the bricks. Survive. Every 20 seconds the drop gets meaner.</p>
+        <button id="btn-play" class="btn primary big">Play</button>
+        <div class="row">
+          <button class="btn" data-open="scores">Top scores</button>
+          <button class="btn" data-open="settings">Settings</button>
+        </div>
+        <p class="hint" id="controls-hint"></p>
+        <p class="best-line">Best <b id="title-best">0</b></p>
+      </div>
+    </section>
+
+    <section id="screen-pause" class="screen" hidden>
+      <div class="panel">
+        <h2>Paused</h2>
+        <button id="btn-resume" class="btn primary big" data-autofocus>Resume</button>
+        <div class="row">
+          <button id="btn-restart" class="btn">Restart</button>
+          <button class="btn" data-open="settings">Settings</button>
+        </div>
+        <button id="btn-quit" class="btn ghost">Quit to menu</button>
+      </div>
+    </section>
+
+    <section id="screen-over" class="screen" hidden>
+      <div class="panel">
+        <h2>Game over</h2>
+        <div class="final">
+          <span id="over-score" class="final-score">0</span>
+          <span class="final-label">seconds survived</span>
+        </div>
+        <p id="over-badge" class="badge" hidden>New best!</p>
+        <p class="stats"><span>Level <b id="over-level">1</b></span><span>Close calls <b id="over-close">0</b></span></p>
+        <label id="over-name-row" class="name-row" hidden>
+          <span>Top-5 score! Your name</span>
+          <input id="over-name" maxlength="14" autocomplete="nickname" enterkeyhint="done" spellcheck="false" />
+        </label>
+        <ol id="over-board" class="board"></ol>
+        <button id="btn-again" class="btn primary big" data-autofocus>Play again</button>
+        <button id="btn-menu" class="btn ghost">Menu</button>
+      </div>
+    </section>
+
+    <section id="screen-scores" class="screen" hidden>
+      <div class="panel">
+        <h2>Top scores</h2>
+        <ol id="scores-board" class="board"></ol>
+        <button class="btn primary" data-back data-autofocus>Back</button>
+      </div>
+    </section>
+
+    <section id="screen-settings" class="screen" hidden>
+      <div class="panel">
+        <h2>Settings</h2>
+        <div class="settings">
+          <label class="toggle"><span>Music</span><input type="checkbox" id="set-music" /><i></i></label>
+          <label class="toggle"><span>Sound effects</span><input type="checkbox" id="set-sfx" /><i></i></label>
+          <label class="toggle" id="vibrate-row"><span>Vibration</span><input type="checkbox" id="set-vibrate" /><i></i></label>
+          <div class="seg" role="radiogroup" aria-label="Graphics quality">
+            <span>Graphics</span>
+            <div>
+              <label><input type="radio" name="gfx" value="auto" /><b>Auto</b></label>
+              <label><input type="radio" name="gfx" value="high" /><b>High</b></label>
+              <label><input type="radio" name="gfx" value="medium" /><b>Med</b></label>
+              <label><input type="radio" name="gfx" value="low" /><b>Low</b></label>
+            </div>
+          </div>
+        </div>
+        <button class="btn primary" data-back data-autofocus>Done</button>
+      </div>
+    </section>
+
+    <div id="rotate-hint" aria-hidden="true">Turn your phone upright for the best view</div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
