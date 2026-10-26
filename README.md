@@ -1,10 +1,17 @@
+<picture>
+  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/images/masthead-dark-mobile.svg">
+  <source media="(max-width: 600px)" srcset="docs/images/masthead-light-mobile.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/masthead-dark-desktop.svg">
+  <img src="docs/images/masthead-light-desktop.svg" width="100%" alt="Falling Bricks 3D">
+</picture>
+
 # Falling Bricks 3D
 
-**▶ Play now: https://stewalexander-com.github.io/falling-bricks-3d/**
+A 3D web remake of [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules and the same *Ode to Joy* soundtrack, plus a new twist from level 4: **cracked bricks** that burst into shards as they fall. Playable in any modern browser on desktop, phone and tablet. Nothing to install.
+
+**[Play now ↗](https://stewalexander-com.github.io/falling-bricks-3d/)** · [How to play](#how-to-play) · [Settings](#settings) · [Development](#development)
 
 ![Falling Bricks 3D](public/og.jpg)
-
-A 3D web remake of [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules and the same *Ode to Joy* soundtrack, plus a new twist from level 4: **cracked bricks** that burst into shards as they fall. Playable in any modern browser on desktop, phone and tablet. Nothing to install.
 
 ---
 
@@ -21,13 +28,17 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 - The game pauses itself if you switch tabs or apps.
 - A short "drag to move" prompt appears on your first game and disappears once you move.
 
-### Levels 1 to 3: learn the drop
+<sub>LEVELS 1 TO 3</sub>
+
+### Learn the drop
 
 - Every **20 seconds** the level goes up: bricks fall faster and waves get bigger. The bar under the HUD shows progress to the next level.
 - From **level 3**, each brick gets its own speed, and the spread widens every 3 levels.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
 
-### Level 4 and up: cracked bricks
+<sub>LEVEL 4 AND UP</sub>
+
+### Cracked bricks
 
 A banner announces them the first time. A cracked brick:
 
@@ -139,7 +150,8 @@ npm run build      # type-check + production build into dist/
 npm run preview    # serve the production build locally
 ```
 
-### Game modes and playtesting
+<details>
+<summary><b>Game modes and playtesting</b></summary>
 
 Cracked bricks won a playtest against two other post-level-3 mechanics, which are still in the code for comparison. Pick one with `?mode=`:
 
@@ -154,13 +166,16 @@ Other testing parameters: `?level=3` starts at level 3, and `?bot` lets the auto
 
 `npm run playtest -- 40` has the autopilot play 40 games of each mode headlessly and prints survival times, how often it had to change direction, close calls and the narrowest corridor it faced. The design notes and results are in [`docs/post-level-3-design.md`](docs/post-level-3-design.md).
 
+</details>
+
 Add `?debug` to the URL to expose `sim`, `renderer`, `sound`, `store` and `game` on `window` for inspection in the browser console.
 
 ### Deployment
 
 Every push to `main` builds and deploys to GitHub Pages through [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The site's base path (`/falling-bricks-3d/`) is set in `vite.config.ts`.
 
-### Project structure
+<details>
+<summary><b>Project structure</b></summary>
 
 | Path | Purpose |
 |------|---------|
@@ -179,6 +194,8 @@ Every push to `main` builds and deploys to GitHub Pages through [`.github/workfl
 The PWA build (via `vite-plugin-pwa`) generates the web app manifest and service worker. The music is left out of the offline cache because Safari streams audio in chunks, which breaks precaching.
 
 The service worker is registered in `src/main.ts` rather than by the plugin. The app checks for a new version on launch, whenever it returns to the foreground, every 30 minutes and when the device comes back online. A new service worker takes over as soon as it's installed. The page reloads into the new version only on the main menu, or when it's hidden on the game-over screen, so a deploy never interrupts a run.
+
+</details>
 
 ---
 

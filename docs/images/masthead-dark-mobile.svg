@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="196" viewBox="0 0 440 196" role="img" aria-labelledby="title desc">
+<title id="title">Falling Bricks 3D</title><desc id="desc">Stew Alexander. Falling Bricks 3D for desktop, phone and tablet. Decorative linework of falling bricks, a cracked brick bursting into two shards, and the ball.</desc>
+<rect width="440" height="196" fill="#121c25"/><path d="M0 1H440" stroke="#c9b887" stroke-width="2"/>
+<text x="26" y="34" fill="#bdc9cf" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.6">STEW ALEXANDER / FALLING BRICKS 3D</text>
+<g fill="#f1eee4" font-family="Georgia, 'Times New Roman', serif" font-size="38" letter-spacing="-1.1"><text x="26" y="89">Falling</text><text x="26" y="132">Bricks 3D</text></g>
+<path d="M26 164H91" stroke="#badbd4" stroke-width="3"/><g fill="none" stroke="#354650" stroke-width="1.3"><rect x="300" y="60" width="56" height="20" rx="4"/><path d="M318 34V58M338 42V58"/><rect x="330" y="118" width="28" height="20" rx="4"/><rect x="376" y="110" width="28" height="20" rx="4"/></g><circle cx="356" cy="168" r="7" fill="#badbd4"/><path d="M365 168H414" stroke="#c9b887"/></svg>
