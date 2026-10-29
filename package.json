@@ -8,6 +8,7 @@
     "preview": "vite preview --host",
     "typecheck": "tsc",
     "playtest": "tsx scripts/playtest.ts",
+    "camera-check": "tsx scripts/camera-check.ts",
     "theme": "tsx scripts/readme-theme.ts"
   },
   "license": "GPL-3.0",

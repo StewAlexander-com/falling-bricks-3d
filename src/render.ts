@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import * as C from './config';
+import { VIEW, VIEW_BOTTOM, VIEW_TOP, fitCamera } from './camera';
 import type { RGB, Sim } from './sim';
 
 export type Quality = 'high' | 'medium' | 'low';
@@ -10,11 +11,6 @@ const MAX_BRICKS = 40;
 const MAX_PARTS = 120;
 const TRAIL_LEN = 6;
 const WALL_Z = -34;
-const VIEW_TOP = C.FIELD_H + 64;
-const VIEW_BOTTOM = -12;
-const SIDE_PAD = 14;
-const FOV = 30;
-const CAM_PITCH = THREE.MathUtils.degToRad(8);
 const GRAVITY = -1100;
 
 const QUALITY: Record<Quality, { dpr: number; shadow: number }> = {
@@ -78,7 +74,7 @@ export class Renderer {
   quality: Quality;
 
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(FOV, 1, 10, 6000);
+  private camera = new THREE.PerspectiveCamera(VIEW.fov, 1, 10, 6000);
   private camBase = new THREE.Vector3();
   private worldPerPx = 1;
   private insets = { top: 0, bottom: 0 };
@@ -156,6 +152,14 @@ export class Renderer {
     this.key.shadow.bias = -0.0008;
     this.key.shadow.normalBias = 1.5;
     this.scene.add(this.key, this.key.target);
+
+    // The camera sits off to one side, so the faces it sees most are the ones
+    // the key light misses. A dim cool fill from that side keeps them from
+    // going flat black and is what makes the bricks read as solid.
+    const rim = new THREE.DirectionalLight('#9ec2ff', 1.1);
+    rim.position.set(1500, C.FIELD_H / 2 + 400, 620);
+    rim.target.position.set(0, C.FIELD_H / 2, 0);
+    this.scene.add(rim, rim.target);
 
     this.buildWorld();
 
@@ -337,68 +341,42 @@ export class Renderer {
 
     this.camera.updateProjectionMatrix();
 
-    // Fit the tilted camera by projecting the playfield's corners into the
-    // band of the screen the HUD leaves free.
     const ndcTop = 1 - (2 * this.insets.top) / h;
     const ndcBot = -1 + (2 * this.insets.bottom) / h;
-    const xw = C.FIELD_W / 2 + SIDE_PAD;
-    const zd = C.BRICK_DEPTH / 2;
-    const corners: THREE.Vector3[] = [];
-    for (const x of [-xw, xw]) for (const y of [VIEW_BOTTOM, VIEW_TOP]) for (const z of [-zd, zd]) corners.push(new THREE.Vector3(x, y, z));
-    const dir = new THREE.Vector3(0, Math.sin(CAM_PITCH), Math.cos(CAM_PITCH));
-    const target = new THREE.Vector3(0, (VIEW_TOP + VIEW_BOTTOM) / 2, 0);
-    const tanH = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const bounds = (d: number) => {
-      this.camera.position.copy(target).addScaledVector(dir, d);
-      this.camera.lookAt(target);
-      this.camera.updateMatrixWorld();
-      let minY = Infinity, maxY = -Infinity, maxX = 0;
-      for (const c of corners) {
-        this.v.copy(c).project(this.camera);
-        minY = Math.min(minY, this.v.y);
-        maxY = Math.max(maxY, this.v.y);
-        maxX = Math.max(maxX, Math.abs(this.v.x));
-      }
-      return { minY, maxY, maxX };
-    };
-    let dist = 2000;
-    for (let pass = 0; pass < 4; pass++) {
-      let lo = 100, hi = 40000;
-      for (let i = 0; i < 40; i++) {
-        const mid = (lo + hi) / 2;
-        const b = bounds(mid);
-        if (b.maxX <= 1 && b.maxY - b.minY <= ndcTop - ndcBot) hi = mid;
-        else lo = mid;
-      }
-      dist = hi;
-      const b = bounds(dist);
-      const shiftNdc = (b.maxY + b.minY) / 2 - (ndcTop + ndcBot) / 2;
-      target.y += shiftNdc * dist * tanH;
-    }
-    bounds(dist);
+    this.camTarget.copy(fitCamera(this.camera, ndcTop, ndcBot));
     this.camBase.copy(this.camera.position);
-    this.camTarget.copy(target);
+
+    // The ball's row in clip space, as a start point and a direction. Solving
+    // against these turns a screen x into a position along the row exactly,
+    // for any camera angle. Both are fixed until the next resize.
+    const vp = this.m.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
+    this.rowStart.set(-C.FIELD_W / 2, C.BALL_Y, 0, 1).applyMatrix4(vp);
+    this.rowDir.set(C.FIELD_W, 0, 0, 0).applyMatrix4(vp);
 
     const a = this.v.set(-50, C.BALL_Y, 0).project(this.camera).x;
     const b = this.v.set(50, C.BALL_Y, 0).project(this.camera).x;
     this.worldPerPx = 100 / (((b - a) / 2) * w);
-    this.ballNdcY = this.v.set(0, C.BALL_Y, 0).project(this.camera).y;
   }
 
   private camTarget = new THREE.Vector3();
-  private ballNdcY = 0;
-  private ray = new THREE.Raycaster();
-  private plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  private rowStart = new THREE.Vector4();
+  private rowDir = new THREE.Vector4();
 
-  /** Sim-space x on the ball's row that sits under the given client x. */
+  /**
+   * Sim-space x on the ball's row that sits under the given client x.
+   *
+   * The row projects to a straight line on screen, so a point along it is
+   * `start + t * dir` in clip space and its screen x is the ratio of the x and
+   * w components. Setting that equal to the pointer leaves one linear equation
+   * in t, which stays exact however the camera is yawed or pitched.
+   */
   screenToSimX(clientX: number) {
     const rect = this.gl.domElement.getBoundingClientRect();
     const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
-    this.camera.position.copy(this.camBase);
-    this.camera.updateMatrixWorld();
-    this.ray.setFromCamera(new THREE.Vector2(ndcX, this.ballNdcY), this.camera);
-    const hit = this.ray.ray.intersectPlane(this.plane, this.v);
-    return (hit ? hit.x : 0) + C.FIELD_W / 2;
+    const den = this.rowDir.x - ndcX * this.rowDir.w;
+    if (Math.abs(den) < 1e-9) return C.FIELD_W / 2;
+    const t = (ndcX * this.rowStart.w - this.rowStart.x) / den;
+    return THREE.MathUtils.clamp(t * C.FIELD_W, 0, C.FIELD_W);
   }
 
   get simUnitsPerPx() { return this.worldPerPx; }
@@ -489,7 +467,10 @@ export class Renderer {
       const bank = THREE.MathUtils.clamp(-b.vx / 900, -0.18, 0.18);
       this.e.set(Math.sin(this.time * 1.7 + b.id) * 0.06 * wob, Math.sin(this.time * 1.1 + b.id * 1.7) * 0.1 * wob, bank);
       this.q.setFromEuler(this.e);
-      this.m.compose(this.v.set(toX(b.x), b.y, 0), this.q, this.s.set(b.w / C.BRICK_W, b.h / C.BRICK_H, 1));
+      // Wide bricks are deep as well as broad, so weight reads from any angle.
+      const heft = b.w / C.BRICK_W;
+      const depth = THREE.MathUtils.clamp(1 + (heft - 1) * C.BRICK_HEFT_DEPTH, 0.6, 1.3);
+      this.m.compose(this.v.set(toX(b.x), b.y, 0), this.q, this.s.set(heft, b.h / C.BRICK_H, depth));
       this.bricks.setMatrixAt(n, this.m);
       this.col.setRGB(b.color[0], b.color[1], b.color[2], THREE.SRGBColorSpace).multiplyScalar(1 + b.spdNorm * 0.9);
       if (b.splitY !== null) {
