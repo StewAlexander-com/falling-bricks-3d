@@ -85,16 +85,32 @@ function trackingDrift(view: View, aspect: number) {
   return worst * 100;
 }
 
-/** Share of a brick's on-screen silhouette made up of faces other than the front. */
-function solidity(view: View, depth: number) {
-  const yaw = THREE.MathUtils.degToRad(view.yaw);
-  const pitch = THREE.MathUtils.degToRad(view.pitch);
-  const side = depth * Math.sin(yaw);
-  const top = depth * Math.sin(pitch);
-  return {
-    side: (100 * side) / (C.BRICK_W * Math.cos(yaw) + side),
-    top: (100 * top) / (C.BRICK_H * Math.cos(pitch) + top),
+/**
+ * How wide the far end of the shaft looks against the ball's row. Below 100%
+ * the shaft recedes toward the top of the screen and bricks grow as they come
+ * down; above 100% the picture is inverted and the far end is the nearest part.
+ */
+function recession(view: View, aspect: number) {
+  const camera = makeCamera(view, aspect, 1, -1);
+  const v = new THREE.Vector3();
+  const spanAt = (y: number) => {
+    const left = v.set(-195, y, 0).project(camera).x;
+    return v.set(195, y, 0).project(camera).x - left;
   };
+  return (100 * spanAt(C.FIELD_H)) / spanAt(C.BALL_Y);
+}
+
+/**
+ * Share of a brick's silhouette at row `y` that is its underside. At the ball's
+ * row this is the number that decides whether a brick reads as a solid block or
+ * a painted rectangle: a camera level with that row sees the underside exactly
+ * edge-on, and no amount of lighting rescues it.
+ */
+function faceAt(view: View, depth: number, y: number) {
+  const camera = makeCamera(view, 390 / 844, 1, -1);
+  const angle = Math.abs(Math.atan2(y - camera.position.y, camera.position.z));
+  const face = depth * Math.sin(angle);
+  return (100 * face) / (C.BRICK_H * Math.cos(angle) + face);
 }
 
 /** How much wider than its true width a brick looks, which is how much narrower a corridor looks. */
@@ -103,18 +119,18 @@ function gapCost(view: View, depth: number) {
   return C.BRICK_W * Math.cos(yaw) + depth * Math.sin(yaw) - C.BRICK_W;
 }
 
-const ASPECTS: [string, number][] = [['phone 390x844', 390 / 844], ['desktop 1440x900', 1440 / 900]];
-console.log('                     tracking drift        side face  top face  corridor looks');
+const ASPECTS: [string, number][] = [['phone', 390 / 844], ['desktop', 1440 / 900]];
+console.log('         far end vs ball row   underside mid / at ball   drift (phone/desktop)   corridor looks');
 for (const [name, view, depth] of [['before', LEGACY, LEGACY_DEPTH], ['after', VIEW, C.BRICK_DEPTH]] as const) {
-  const drift = ASPECTS.map(([label, a]) => `${label.split(' ')[0]} ${trackingDrift(view, a).toFixed(1)}%`).join('  ');
-  const s = solidity(view, depth);
-  const narrower = C.SAFE_GAP - gapCost(view, depth);
+  const rec = recession(view, 390 / 844);
+  const drift = ASPECTS.map(([, a]) => `${trackingDrift(view, a).toFixed(1)}%`).join(' / ');
+  const face = `${faceAt(view, depth, C.FIELD_H / 2).toFixed(0)}% / ${faceAt(view, depth, C.BALL_Y).toFixed(0)}%`;
   console.log(
     name.padEnd(8),
-    drift.padEnd(28),
-    `${s.side.toFixed(0)}%`.padStart(6),
-    `${s.top.toFixed(0)}%`.padStart(9),
-    `${narrower.toFixed(0)} of ${C.SAFE_GAP} units`.padStart(18),
+    `${rec.toFixed(1)}% ${rec < 100 ? 'recedes' : 'INVERTED'}`.padStart(19),
+    face.padStart(24),
+    drift.padStart(23),
+    `${(C.SAFE_GAP - gapCost(view, depth)).toFixed(0)} of ${C.SAFE_GAP} units`.padStart(21),
   );
 }
 console.log(`\nA guaranteed corridor is ${C.SAFE_GAP} units wide and the ball is ${C.BALL_RADIUS * 2} across.`);

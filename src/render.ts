@@ -61,7 +61,9 @@ function streakGeometry() {
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
-    const k = Math.pow(1 - (pos.getY(i) + 0.5), 1.6);
+    // Falls away quickly, so the streak reads as motion behind the brick
+    // rather than a solid bar competing with it.
+    const k = Math.pow(1 - (pos.getY(i) + 0.5), 2.4);
     colors.set([k, k, k], i * 3);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -135,12 +137,17 @@ export class Renderer {
     pmrem.dispose();
     this.scene.background = new THREE.Color('#05060d');
 
-    this.hemi = new THREE.HemisphereLight('#a9b8ff', '#1b1030', 0.9);
+    // Ambient only. Anything it adds to a brick's front face is contrast the
+    // key and the uplight have to fight, so it stays low and cool.
+    this.hemi = new THREE.HemisphereLight('#9fb0ff', '#2e2145', 0.55);
     this.scene.add(this.hemi);
 
-    // Nearly frontal so each brick's shadow hugs it instead of reading as a second brick.
-    this.key = new THREE.DirectionalLight('#fff1dc', 2.6);
-    this.key.position.set(-0.2 * 1600, C.FIELD_H / 2 + 0.3 * 1600, 1600);
+    // High and off to the left, so a brick's face runs bright at the top and
+    // falls away toward the bottom instead of being one flat wash of colour.
+    // The wall is only 18 units behind a brick, so even at this angle the
+    // shadow stays a contact shadow rather than a second brick.
+    this.key = new THREE.DirectionalLight('#fff1dc', 2.5);
+    this.key.position.set(-0.42 * 1600, C.FIELD_H / 2 + 0.72 * 1600, 1600);
     this.key.target.position.set(0, C.FIELD_H / 2, 0);
     const sc = this.key.shadow.camera;
     sc.left = -C.FIELD_W / 2 - 120;
@@ -153,24 +160,28 @@ export class Renderer {
     this.key.shadow.normalBias = 1.5;
     this.scene.add(this.key, this.key.target);
 
-    // The camera sits off to one side, so the faces it sees most are the ones
-    // the key light misses. A dim cool fill from that side keeps them from
-    // going flat black and is what makes the bricks read as solid.
-    const rim = new THREE.DirectionalLight('#9ec2ff', 1.1);
-    rim.position.set(1500, C.FIELD_H / 2 + 400, 620);
-    rim.target.position.set(0, C.FIELD_H / 2, 0);
-    this.scene.add(rim, rim.target);
+    // The camera looks up the shaft, so the underside is the second face of a
+    // brick the player ever sees and the key never reaches it. This fill is
+    // aimed almost straight up, in the floor line's own colour: it has to
+    // light the bottom without spilling onto the face, because the difference
+    // between the two is the whole reason a brick reads as a solid block.
+    const under = new THREE.DirectionalLight('#ff5f90', 1.5);
+    under.position.set(90, -1600, 110);
+    under.target.position.set(0, C.FIELD_H / 2, 0);
+    this.scene.add(under, under.target);
 
     this.buildWorld();
 
-    const brickGeo = new RoundedBoxGeometry(C.BRICK_W, C.BRICK_H, C.BRICK_DEPTH, 3, 4.5);
-    const brickMat = new THREE.MeshStandardMaterial({ roughness: 0.38, metalness: 0 });
+    // A small radius keeps most of the face flat; at 4.5 the bevel ate enough
+    // of a 22-unit brick that it read as a pill rather than a block.
+    const brickGeo = new RoundedBoxGeometry(C.BRICK_W, C.BRICK_H, C.BRICK_DEPTH, 3, 2.4);
+    const brickMat = new THREE.MeshStandardMaterial({ roughness: 0.46, metalness: 0 });
     // Bricks are partly self-lit by their own instance colour, so hot (fast)
     // bricks, whose colour is boosted above 1, glow and stay readable on the dark wall.
     brickMat.onBeforeCompile = (shader) => {
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <emissivemap_fragment>',
-        '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vColor.rgb * 0.22;',
+        '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vColor.rgb * 0.15;',
       );
     };
     this.bricks = new THREE.InstancedMesh(brickGeo, brickMat, MAX_BRICKS);
@@ -483,12 +494,13 @@ export class Renderer {
 
       const k = sim.mode === 'dead' ? 0 : THREE.MathUtils.clamp((b.speed - 250) / 300, 0, 1);
       const drift = sim.mode === 'dead' ? 0 : Math.abs(b.vx);
-      const len = k > 0.02 || drift ? Math.max(k > 0.02 ? b.speed * 0.18 * (0.4 + 0.6 * k) : 0, drift ? 70 : 0) : 0;
-      // Streaks trail opposite the direction of travel.
+      const len = k > 0.02 || drift ? Math.max(k > 0.02 ? b.speed * 0.11 * (0.4 + 0.6 * k) : 0, drift ? 50 : 0) : 0;
+      // Streaks trail opposite the direction of travel, and stay narrower and
+      // dimmer than the brick so the solid shape is what the eye lands on.
       this.q.setFromAxisAngle(this.zAxis, Math.atan2(b.vx, b.speed));
-      this.m.compose(this.v.set(toX(b.x), b.y + b.h / 2 - 2, -C.BRICK_DEPTH / 2), this.q, this.s.set(b.w * 0.82, len, 1));
+      this.m.compose(this.v.set(toX(b.x), b.y + b.h / 2 - 2, -C.BRICK_DEPTH / 2), this.q, this.s.set(b.w * 0.58, len, 1));
       this.streaks.setMatrixAt(n, this.m);
-      this.col.multiplyScalar(0.25 + Math.max(k, drift ? 0.6 : 0) * 0.55);
+      this.col.multiplyScalar(0.14 + Math.max(k, drift ? 0.6 : 0) * 0.3);
       this.streaks.setColorAt(n, this.col);
       n++;
     }

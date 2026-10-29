@@ -11,20 +11,42 @@ import * as C from './config';
 export interface View {
   /** Vertical field of view, in degrees. */
   fov: number;
-  /** Downward tilt, in degrees. Reveals the top face of a brick. */
+  /**
+   * Where the camera sits relative to the middle of the shaft, in degrees.
+   * Positive puts it above looking down, which makes the far end of the shaft
+   * the *nearest* part of the picture. Negative puts it below looking up, so
+   * the shaft recedes toward the top of the screen.
+   */
   pitch: number;
-  /** Swing off the centre line, in degrees. Reveals a side face. */
+  /** Swing off the centre line, in degrees. */
   yaw: number;
 }
 
 /**
- * Yaw is the cheap way to show a brick's depth. A falling brick drifts across
- * the screen toward the vanishing point of the world's vertical, and because
- * the camera's right vector stays level that vanishing point sits at screen
- * centre whatever the yaw. Pitch and fov are what pull a brick away from the
- * column it will land in, so they stay close to head-on and yaw does the work.
+ * The shaft recedes away from the player toward the top of the screen, so
+ * bricks enter small and grow as they come down, and the floor and every row
+ * of bricks stay level across the screen.
+ *
+ * Yaw stays at zero deliberately. Swinging the camera sideways shows a brick's
+ * side face, but it also tips every horizontal line in the scene and widens a
+ * brick's silhouette, so the guaranteed corridors look narrower than they are.
+ * Depth is worth having only while the playfield still reads square-on.
+ *
+ * The pitch has to clear the ball's row by enough that a brick sitting on it
+ * still shows some underside. Sitting just under the floor was not enough:
+ * the near end of the shaft ended up level with the eye, where a brick is
+ * exactly edge-on and reads as a painted rectangle no matter how it is lit.
+ * Dropping the eye line below the floor puts the whole playfield above it, so
+ * a brick shows a lit underside the entire way down.
+ *
+ * Both angles stay small. Pitch is what separates near from far, but it also
+ * pulls a falling brick away from the column it will land in, and the player
+ * has to read that column. Around a tenth of recession is enough to see; much
+ * more and the shaft turns into a bowling lane. The long lens keeps the
+ * remaining perspective gentle instead of fish-eyed, and costs the least
+ * drift of any focal length that shows the same amount of depth.
  */
-export const VIEW: View = { fov: 31, pitch: 9, yaw: 13 };
+export const VIEW: View = { fov: 26, pitch: -16, yaw: 0 };
 
 export const VIEW_TOP = C.FIELD_H + 64;
 export const VIEW_BOTTOM = -12;
