@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc",
-    "playtest": "tsx scripts/playtest.ts"
+    "playtest": "tsx scripts/playtest.ts",
+    "theme": "tsx scripts/readme-theme.ts"
   },
   "license": "GPL-3.0",
   "type": "module",
