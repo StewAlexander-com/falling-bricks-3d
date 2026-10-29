@@ -396,6 +396,17 @@ h2 { margin: 0 0 4px; font-size: 30px; font-weight: 900; letter-spacing: 0.02em;
   .btn.big { min-height: 50px; }
 }
 
+/* The playfield is portrait, so a desktop window leaves wide dark margins
+   either side of it. Letting the readouts spread to the edges turns those
+   margins into a deliberate scoreboard rather than leftover space. */
+@media (min-width: 900px) {
+  #hud { width: min(100%, 1040px); padding: 18px 28px 10px; gap: 8px 24px; }
+  .stat .lbl { font-size: 12px; letter-spacing: 0.16em; }
+  .stat .val { font-size: 38px; }
+  .stat:nth-child(3) .val { font-size: 28px; }
+  #vignette { background: radial-gradient(ellipse 42% 70% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.62) 100%); }
+}
+
 @media (max-height: 640px) {
   .final-score { font-size: 56px; }
   .board li { padding: 6px 10px; }
