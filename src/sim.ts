@@ -308,10 +308,31 @@ export class Sim {
 
   // ── Bricks ────────────────────────────────────────────────────────────────
 
+  /**
+   * Width of one random brick. Uniform until level 3, then spreading wider
+   * each level, so a late wave is a mix of heavy slabs and light chips.
+   */
+  private brickWidth() {
+    const stage = this.level - C.SIZE_VAR_START_LEVEL + 1;
+    if (stage <= 0) return C.BRICK_W;
+    const v = ramp(C.BRICK_SIZE_VAR, stage);
+    return C.BRICK_W * (1 + rand(-v, v));
+  }
+
+  /**
+   * Heavier bricks come down harder. Applied where a width is drawn at random,
+   * never to formations, whose rows must all fall at one speed to hold shape.
+   */
+  private heftSpeed(speed: number, w: number) {
+    return clamp(speed * (1 + (w / C.BRICK_W - 1) * C.BRICK_HEFT_SPEED), C.SPEED_FLOOR, C.SPEED_CAP);
+  }
+
   private makeBrick(x: number, y: number, speed: number, w: number = C.BRICK_W): Brick {
     const base = this.baseSpeed();
     const spdNorm = clamp((speed - base * 0.7) / (C.SPEED_CAP - base * 0.7), 0, 1);
-    const h = C.BRICK_H + Math.floor(spdNorm * C.BRICK_MAX_EXTRA_H);
+    // Clamped so a thin formation sliver or a shard stays a sensible shape.
+    const heft = clamp(w / C.BRICK_W, 0.6, 1.4);
+    const h = (C.BRICK_H + Math.floor(spdNorm * C.BRICK_MAX_EXTRA_H)) * (1 + (heft - 1) * C.BRICK_HEFT_H);
 
     let [r, g, b] = PALETTES[(this.level - 1) % PALETTES.length];
     const heat = Math.min(Math.min(this.tier * 0.09, 0.36) + spdNorm * 0.22, 0.5);
@@ -343,15 +364,20 @@ export class Sim {
       const j = Math.floor(Math.random() * (i + 1));
       [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
     }
-    const selected: number[] = [];
-    for (const x of candidates) {
-      if (selected.every((p) => Math.abs(x - p) >= C.BRICK_W * 1.2)) selected.push(x);
+    // Width is drawn before the position so a wide brick can be kept off the
+    // rails and spaced against its neighbours by what it actually measures.
+    const selected: { x: number; w: number }[] = [];
+    for (const cx of candidates) {
+      const w = this.brickWidth();
+      const x = clamp(cx, w / 2, C.FIELD_W - w / 2);
+      if (selected.every((p) => Math.abs(x - p.x) >= (w + p.w) * 0.6)) selected.push({ x, w });
       if (selected.length === n) break;
     }
 
     let vOff = 0;
-    selected.forEach((x, i) => {
-      this.bricks.push(this.makeBrick(x, C.FIELD_H + C.BRICK_H + vOff, this.brickSpeed(base)));
+    selected.forEach((s, i) => {
+      const speed = this.heftSpeed(this.brickSpeed(base), s.w);
+      this.bricks.push(this.makeBrick(s.x, C.FIELD_H + C.BRICK_H + vOff, speed, s.w));
       vOff = i % 2 === 0 ? 40 : 0;
     });
     this.ensureSafePassage();
@@ -447,13 +473,15 @@ export class Sim {
       this.nextRandomT = this.t + C.BLOCKED_SPAWN_RETRY;
       return;
     }
-    const speed = Math.min(C.SPEED_CAP, this.brickSpeed() * C.RANDOM_BRICK_SPEED_MULT);
+    const base = Math.min(C.SPEED_CAP, this.brickSpeed() * C.RANDOM_BRICK_SPEED_MULT);
     const stage = this.stage;
     const before = stage > 0 ? this.minGaps(this.bricks) : C.MIN_SAFE_GAPS;
     for (let attempt = 0; attempt < 10; attempt++) {
       const aimed = this.mode === 'play' && this.campT >= C.CAMP_TIME && attempt < 6;
-      const x = aimed ? clamp(this.ballX + rand(-20, 20), C.BRICK_W / 2, C.FIELD_W - C.BRICK_W / 2) : this.spawnX();
-      const brick = this.makeBrick(x, C.FIELD_H + C.BRICK_H, speed);
+      const w = this.brickWidth();
+      const speed = this.heftSpeed(base, w);
+      const x = aimed ? clamp(this.ballX + rand(-20, 20), w / 2, C.FIELD_W - w / 2) : this.spawnX(w);
+      const brick = this.makeBrick(x, C.FIELD_H + C.BRICK_H, speed, w);
       if (!this.placementIsSolvable(brick)) continue;
       if (stage > 0 && this.applyTwist(brick, stage) && this.minGaps([...this.bricks, brick]) < Math.min(C.MIN_SAFE_GAPS, before)) clearTwist(brick);
       this.bricks.push(brick);
@@ -469,9 +497,9 @@ export class Sim {
    * places the brick over it. Clamping at the rails gives the strips along the
    * walls the same chance of being hit as the middle.
    */
-  private spawnX() {
+  private spawnX(w = C.BRICK_W) {
     const target = rand(C.BALL_RADIUS, C.FIELD_W - C.BALL_RADIUS);
-    return clamp(target + rand(-C.BRICK_W / 2, C.BRICK_W / 2), C.BRICK_W / 2, C.FIELD_W - C.BRICK_W / 2);
+    return clamp(target + rand(-w / 2, w / 2), w / 2, C.FIELD_W - w / 2);
   }
 
   private trackCamping(dt: number) {

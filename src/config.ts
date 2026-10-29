@@ -11,8 +11,17 @@ export const BALL_Y = FIELD_H * 0.12;
 
 export const BRICK_W = 62;
 export const BRICK_H = 22;
-export const BRICK_DEPTH = 26;
+export const BRICK_DEPTH = 32;
 export const BRICK_MAX_EXTRA_H = 10;
+
+// Bricks stop being identical once each one gets its own speed, at level 3.
+// The spread widens per level, so later waves mix heavy slabs with light ones.
+export const SIZE_VAR_START_LEVEL = 3;
+export const BRICK_SIZE_VAR = [0.08, 0.035, 0.3] as const; // ± fraction of BRICK_W
+// How much of a brick's width carries into how heavy it looks and behaves.
+export const BRICK_HEFT_H = 0.45;
+export const BRICK_HEFT_DEPTH = 0.75;
+export const BRICK_HEFT_SPEED = 0.25;
 
 export const SCORE_PER_LEVEL = 20;
 
