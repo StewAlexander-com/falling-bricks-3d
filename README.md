@@ -2,18 +2,22 @@
   <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/images/masthead-dark-mobile.svg">
   <source media="(max-width: 600px)" srcset="docs/images/masthead-light-mobile.svg">
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/masthead-dark-desktop.svg">
-  <img src="docs/images/masthead-light-desktop.svg" width="100%" alt="Falling Bricks 3D">
+  <img src="docs/images/masthead-light-desktop.svg" width="100%" alt="Falling Bricks 3D — a web game by Stew Alexander. Open source, nothing to install.">
 </picture>
 
 # Falling Bricks 3D
 
-A 3D web remake of [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules and the same *Ode to Joy* soundtrack, plus a new twist from level 4: **cracked bricks** that burst into shards as they fall. Playable in any modern browser on desktop, phone and tablet. Nothing to install.
+A 3D web remake of [Falling Bricks ↗](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game), the Pythonista iOS dodge game. Same rules and the same *Ode to Joy* soundtrack, plus a new twist from level 4: **cracked bricks** that burst into shards as they fall. Playable in any modern browser on desktop, phone and tablet. Nothing to install.
 
-**[Play now ↗](https://stewalexander-com.github.io/falling-bricks-3d/)** · [How to play](#how-to-play) · [Settings](#settings) · [Development](#development)
+[<img src="docs/images/cta-play.svg" alt="Play now" height="44">](https://stewalexander-com.github.io/falling-bricks-3d/)
+
+[How to play](#how-to-play) · [Settings](#settings) · [What's new](#whats-new) · [Performance](#performance) · [Development](#development)
 
 ![Falling Bricks 3D](public/og.jpg)
 
 ---
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-how-to-play-dark.svg"><img src="docs/images/eyebrow-how-to-play-light.svg" alt="Two minutes to learn" height="16"></picture>
 
 ## How to play
 
@@ -28,7 +32,7 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 - The game pauses itself if you switch tabs or apps.
 - A short "drag to move" prompt appears on your first game and disappears once you move.
 
-<sub>LEVELS 1 TO 3</sub>
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-levels-1-3-dark.svg"><img src="docs/images/eyebrow-levels-1-3-light.svg" alt="Levels 1 to 3 · the basics" height="16"></picture>
 
 ### Learn the drop
 
@@ -36,7 +40,7 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 - From **level 3**, each brick gets its own speed, and the spread widens every 3 levels.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
 
-<sub>LEVEL 4 AND UP</sub>
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-level-4-up-dark.svg"><img src="docs/images/eyebrow-level-4-up-light.svg" alt="Level 4 and up · cracked bricks" height="16"></picture>
 
 ### Cracked bricks
 
@@ -57,11 +61,15 @@ The spot under a cracked brick is safe now but won't be in a second, and the gap
 
 "Warning after a burst" is the minimum time between a burst and its shards reaching your row.
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-fair-dark.svg"><img src="docs/images/eyebrow-fair-light.svg" alt="Design promise" height="16"></picture>
+
 ### Always fair, never safe
 
 - There is **always a way through**. Every new brick's path is predicted, including where its shards will go and how they bounce, so at least two ball-sized gaps stay open in your row at every moment.
 - There are **no safe spots**. Bricks reach the walls as often as the middle. If you sit in one place for more than about a second and a half, the next brick is aimed at you, so keep moving.
 - Brush past a brick without touching it to score a **close call**. It doesn't change your score, but it's counted on the game-over screen.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-phone-dark.svg"><img src="docs/images/eyebrow-phone-light.svg" alt="On a phone" height="16"></picture>
 
 ### Phone tips
 
@@ -71,6 +79,8 @@ The spot under a cracked brick is safe now but won't be in a second, and the gap
 - The game is built for portrait. In landscape it still works, but you'll see a hint to rotate.
 
 ---
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-settings-dark.svg"><img src="docs/images/eyebrow-settings-light.svg" alt="Saved on your device" height="16"></picture>
 
 ## Settings
 
@@ -85,6 +95,8 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 
 ---
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-original-dark.svg"><img src="docs/images/eyebrow-original-light.svg" alt="Faithful to the original" height="16"></picture>
+
 ## What carried over from the original
 
 - Every gameplay constant for levels 1 to 3: brick speeds, the ×1.12 level-up boost, erratic-speed tiers, wave sizes, spawn timing, safe-gap width, and ball and brick sizes
@@ -92,6 +104,8 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 - Score = seconds survived, one level every 20 points
 - Top-5 leaderboard with names and dates
 - *Ode to Joy* background music and the dark brick-wall background
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-new-dark.svg"><img src="docs/images/eyebrow-new-light.svg" alt="New in the remake" height="16"></picture>
 
 ## What's new
 
@@ -122,6 +136,8 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 
 ---
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-performance-dark.svg"><img src="docs/images/eyebrow-performance-light.svg" alt="Measured on device" height="16"></picture>
+
 ## Performance
 
 Measured in Comet (Chromium) on a Mac with a 120 Hz display:
@@ -133,11 +149,15 @@ Measured in Comet (Chromium) on a Mac with a 120 Hz display:
 
 The full download is about **150 KB of compressed JavaScript** plus a 48 KB wall texture. The 2.1 MB music file streams separately after you press Play, so it never delays the start.
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-browsers-dark.svg"><img src="docs/images/eyebrow-browsers-light.svg" alt="Compatibility" height="16"></picture>
+
 ## Browser support
 
 Recent Chrome, Edge, Safari (macOS and iOS), Firefox and Samsung Internet. WebGL is required. The music is AAC (`.m4a`), with an Opus (`.webm`) fallback for browsers without AAC.
 
 ---
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-development-dark.svg"><img src="docs/images/eyebrow-development-light.svg" alt="Node · Vite · Three.js" height="16"></picture>
 
 ## Development
 
@@ -197,16 +217,40 @@ The service worker is registered in `src/main.ts` rather than by the plugin. The
 
 </details>
 
+<details>
+<summary><b>README artwork</b></summary>
+
+The masthead, eyebrow labels, call-to-action and footer strip are generated from a single palette in [`scripts/readme-theme.ts`](scripts/readme-theme.ts), which mirrors the design tokens of [StewAlexander.com ↗](https://stewalexander.com): Georgia headings with tight tracking, Arial body copy, gold uppercase eyebrows, mint links, and panels topped with a 2px gold rule. Each piece ships in a light and a dark variant, picked with `prefers-color-scheme`.
+
+```bash
+npm run theme      # rewrite docs/images from the palette
+```
+
+</details>
+
 ---
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-credits-dark.svg"><img src="docs/images/eyebrow-credits-light.svg" alt="With thanks" height="16"></picture>
 
 ## Credits
 
-- Original game: [Falling Bricks](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game) by StewAlexander-com, built with Pythonista's `scene` module
-- 3D engine: [Three.js](https://threejs.org/)
-- Build tooling: [Vite](https://vite.dev/) and [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+- Original game: [Falling Bricks ↗](https://github.com/StewAlexander-com/Falling-Bricks-Mobile-Game) by StewAlexander-com, built with Pythonista's `scene` module
+- 3D engine: [Three.js ↗](https://threejs.org/)
+- Build tooling: [Vite ↗](https://vite.dev/) and [vite-plugin-pwa ↗](https://vite-pwa-org.netlify.app/)
 - Music: public-domain arrangement of Beethoven's *Ode to Joy*, carried over from the original
-- Icon and share image: modelled and rendered in [Blender](https://www.blender.org/)
+- Icon and share image: modelled and rendered in [Blender ↗](https://www.blender.org/)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-license-dark.svg"><img src="docs/images/eyebrow-license-light.svg" alt="GPL-3.0" height="16"></picture>
 
 ## License
 
 [GPL-3.0](LICENSE), same as the original.
+
+<a href="https://stewalexander.com">
+  <picture>
+    <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="docs/images/footer-dark-mobile.svg">
+    <source media="(max-width: 600px)" srcset="docs/images/footer-light-mobile.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/footer-dark-desktop.svg">
+    <img src="docs/images/footer-light-desktop.svg" width="100%" alt="Independent thinking. Practical work. More projects and research at StewAlexander.com">
+  </picture>
+</a>
