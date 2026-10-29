@@ -37,8 +37,9 @@ Steer the ball left and right to dodge the falling bricks. Your score is the num
 ### Learn the drop
 
 - Every **20 seconds** the level goes up: bricks fall faster and waves get bigger. The bar under the HUD shows progress to the next level.
-- From **level 3**, each brick gets its own speed, and the spread widens every 3 levels.
+- From **level 3**, each brick gets its own speed *and its own size*, and both spreads widen every level.
 - **Read the bricks:** taller, hotter-coloured, brighter bricks with long streaks are the fast ones. Bluer bricks are slower than average.
+- **Read the weight:** wide bricks are deep and chunky, and they come down harder than narrow ones. By level 10 the widest brick is nearly twice the width of the narrowest, so a gap you could rely on earlier is no longer a fixed size.
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/eyebrow-level-4-up-dark.svg"><img src="docs/images/eyebrow-level-4-up-light.svg" alt="Level 4 and up · cracked bricks" height="16"></picture>
 
@@ -115,9 +116,10 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 
 **3D graphics**
 - Rounded, lit bricks that wobble slightly as they fall, with shadows cast on the original brick wall
+- Bricks vary in size and weight from level 3, and a wide brick is deep as well as broad, so its heft reads from any angle
 - A glossy ball that rolls as it moves, with a glow, a light that follows it and a motion trail
 - Debris explosion and screen shake on a crash; sparks on close calls
-- A slightly tilted camera that shows the depth of the bricks while keeping the playfield fully visible on any screen shape
+- A camera swung off the centre line and tipped down, so every brick shows a side and a top face instead of a flat rectangle, with a fill light from the camera's side to keep those faces lit
 
 **Fixes to the original**
 - **Same speed on every screen.** The original moved bricks a fixed number of pixels *per frame*, so it ran twice as fast on 120 Hz screens. Speeds are now per second, so 60, 90, 120 and 144 Hz all play identically.
@@ -165,10 +167,29 @@ Requires Node.js 20.19+ or 22.12+.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/falling-bricks-3d/
-npm run build      # type-check + production build into dist/
-npm run preview    # serve the production build locally
+npm run dev          # http://localhost:5173/falling-bricks-3d/
+npm run build        # type-check + production build into dist/
+npm run preview      # serve the production build locally
+npm run camera-check # verify the playfield fits every screen shape
 ```
+
+<details>
+<summary><b>The viewing angle, and what it costs</b></summary>
+
+The camera is swung off the centre line so a brick shows a side face, which is what makes it read as a solid box rather than a coloured rectangle. The constraint is that this must not make the game harder to *read*: a brick falls straight down in world space, but on screen it drifts toward a vanishing point as it falls, so where a brick appears is never quite the column it will land in.
+
+Yaw turns out to be the angle to spend. The camera's right vector stays level, so the vanishing point for a falling brick sits at screen centre however far the view swings sideways. Tilting down and widening the lens are what pull a brick away from its landing column. So the view yaws a lot and tilts very little:
+
+| | field of view | tilt | swing | side face | brick drifts while falling |
+|---|---|---|---|---|---|
+| Before | 30° | 8° | none | none | 2.0% of screen width |
+| Now | 31° | 9° | 13° | 11% of the brick | 2.3% of screen width |
+
+`npm run camera-check` measures both: it reports that drift, and checks across 60 combinations of screen shape and HUD inset that no corner of the playfield falls outside the visible band. The fit is iterative, because an off-axis camera frames the field asymmetrically.
+
+A side effect is that bricks look about 6 units wider than they are, so a guaranteed corridor of 62 units looks like 56. The ball is 30 across, so it still visibly fits.
+
+</details>
 
 <details>
 <summary><b>Game modes and playtesting</b></summary>
@@ -201,7 +222,9 @@ Every push to `main` builds and deploys to GitHub Pages through [`.github/workfl
 |------|---------|
 | `src/config.ts` | Every gameplay constant, converted from the original's per-frame values to per-second |
 | `src/sim.ts` | Game rules, brick generation, the post-level-3 modes, the predictive clear-path check, collision and the autopilot. No rendering |
+| `src/camera.ts` | Viewing angle and the fit that keeps the whole playfield on screen. Depends only on three's maths, so it can be checked without a browser |
 | `scripts/playtest.ts` | Headless autopilot playtest that compares the modes |
+| `scripts/camera-check.ts` | Checks the playfield fits every screen shape, and measures what the viewing angle costs the player |
 | `src/render.ts` | Three.js scene: bricks drawn in a single GPU call, ball, lighting, effects, camera fitting, graphics quality levels |
 | `src/audio.ts` | Music through Web Audio (so volume works on iOS) and sound effects generated in code |
 | `src/main.ts` | Game states, input, HUD, menus and the main loop |
