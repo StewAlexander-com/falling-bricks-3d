@@ -304,6 +304,30 @@ export class Renderer {
       rail.receiveShadow = true;
       this.scene.add(rail);
     }
+    // Rungs on the back wall, evenly spaced in world space so perspective
+    // bunches them toward the top. They are what tells the player the shaft
+    // has length during the first few levels, when two bricks are falling
+    // through what is otherwise an empty rectangle. They run well past the
+    // rails and sit a long way behind the play plane so there is never a
+    // moment of wondering whether one is something to dodge.
+    const rungGeo = new THREE.BoxGeometry(C.FIELD_W + 150, 2.5, 2);
+    const rungMat = new THREE.MeshBasicMaterial({
+      color: '#262f66',
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const step = 78;
+    const rungs = new THREE.InstancedMesh(rungGeo, rungMat, Math.ceil((VIEW_TOP - VIEW_BOTTOM) / step) + 1);
+    let n = 0;
+    for (let y = VIEW_BOTTOM + step; y < VIEW_TOP; y += step) {
+      rungs.setMatrixAt(n++, this.m.makeTranslation(0, y, WALL_Z + 3));
+    }
+    rungs.count = n;
+    rungs.frustumCulled = false;
+    this.scene.add(rungs);
+
     const floor = new THREE.Mesh(
       new THREE.BoxGeometry(C.FIELD_W + 16, 4, 30),
       new THREE.MeshStandardMaterial({ color: '#2a1030', emissive: '#ff3d6e', emissiveIntensity: 0.9 }),
