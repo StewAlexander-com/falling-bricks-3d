@@ -119,7 +119,8 @@ Settings, the top-5 leaderboard and your last-used name are saved in your browse
 - Bricks vary in size and weight from level 3, and a wide brick is deep as well as broad, so its heft reads from any angle
 - A glossy ball that rolls as it moves, with a glow, a light that follows it and a motion trail
 - Debris explosion and screen shake on a crash; sparks on close calls
-- A camera swung off the centre line and tipped down, so every brick shows a side and a top face instead of a flat rectangle, with a fill light from the camera's side to keep those faces lit
+- A shaft that recedes toward the top of the screen, lined with rungs that bunch with distance, so bricks enter small and grow as they fall
+- A camera set below the floor, so every brick shows its lit underside rather than reading as a flat rectangle, with a fill light aimed straight up the shaft in the floor line's own colour
 
 **Fixes to the original**
 - **Same speed on every screen.** The original moved bricks a fixed number of pixels *per frame*, so it ran twice as fast on 120 Hz screens. Speeds are now per second, so 60, 90, 120 and 144 Hz all play identically.
@@ -176,16 +177,18 @@ npm run camera-check # verify the playfield fits every screen shape
 <details>
 <summary><b>The viewing angle, and what it costs</b></summary>
 
-The camera is swung off the centre line so a brick shows a side face, which is what makes it read as a solid box rather than a coloured rectangle. The constraint is that this must not make the game harder to *read*: a brick falls straight down in world space, but on screen it drifts toward a vanishing point as it falls, so where a brick appears is never quite the column it will land in.
+The shaft recedes away from you toward the top of the screen, so bricks enter small and grow as they come down. The camera stays square-on to the field: swinging it sideways would show a brick's side face, but it would also tip every horizontal line in the picture and make the game look like it was being watched from the stands. Every row of bricks, and the floor, stays level.
 
-Yaw turns out to be the angle to spend. The camera's right vector stays level, so the vanishing point for a falling brick sits at screen centre however far the view swings sideways. Tilting down and widening the lens are what pull a brick away from its landing column. So the view yaws a lot and tilts very little:
+The constraint is that depth must not make the game harder to *read*. A brick falls straight down in world space, but on screen it slides toward the vanishing point as it falls, so where a brick appears is never quite the column it will land in. That drift is the entire cost of the angle, and it grows with both the tilt and the width of the lens.
 
-| | field of view | tilt | swing | side face | brick drifts while falling |
+Where the camera sits vertically is the part that is easy to get wrong. It has to be low enough that the ball's row — the one row the player actually reads — is well above the eye line, because a brick level with the eye is exactly edge-on and reads as a painted rectangle no matter how it is lit. An earlier version sat just below the floor and left a brick at the ball's row showing 5% underside; it looked flat precisely where it mattered. Dropping the eye line below the floor fixes that, and the long lens buys back some of the drift that costs:
+
+| | field of view | tilt | far end vs near end | underside at the ball's row | brick slides while falling |
 |---|---|---|---|---|---|
-| Before | 30° | 8° | none | none | 2.0% of screen width |
-| Now | 31° | 9° | 13° | 11% of the brick | 2.3% of screen width |
+| Before | 30° | 8° above | 106% — inverted, the far end looked *nearer* | n/a, the camera saw tops | 2.0% of screen width |
+| Now | 26° | 16° below | 91% — recedes | 16% of the brick | 3.2% of screen width |
 
-`npm run camera-check` measures both: it reports that drift, and checks across 60 combinations of screen shape and HUD inset that no corner of the playfield falls outside the visible band. The fit is iterative, because an off-axis camera frames the field asymmetrically.
+`npm run camera-check` measures all of it, and checks across 60 combinations of screen shape and HUD inset that no corner of the playfield falls outside the visible band. It also confirms what the angle does *not* cost: with no sideways swing a brick's silhouette is still exactly its width, so a guaranteed corridor looks as wide as it is.
 
 A side effect is that bricks look about 6 units wider than they are, so a guaranteed corridor of 62 units looks like 56. The ball is 30 across, so it still visibly fits.
 
